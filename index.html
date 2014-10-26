@@ -57,6 +57,9 @@ if (window.hljs && document.readyState && document.readyState === "complete") {
 
 <p>The purpose of this project is to predict, from accelerometer data, whether the user is doing a dumbbell curl correctly, or in one of four incorrect ways. Each row in the dataset represents an instantaneous set of accelerometer readings, and is used to predict whether the user is using proper form at that moment. Presumably this technology could be used to help exercisers improve their form with in-the-moment feedback or, perhaps, ridicule.</p>
 <pre class="r"><code>library(caret)</code></pre>
+<pre><code>## Warning: package 'caret' was built under R version 3.1.1</code></pre>
+<pre><code>## Loading required package: lattice
+## Loading required package: ggplot2</code></pre>
 <pre class="r"><code>library(randomForest)</code></pre>
 <pre><code>## randomForest 4.6-7
 ## Type rfNews() to see new features/changes/bug fixes.</code></pre>
@@ -69,11 +72,42 @@ train&lt;-read.csv(&quot;pml-training.csv&quot;)</code></pre>
 classe&lt;-train$classe
 train&lt;-subset(train, select=-c(classe))
 
+# sorry, results='hide' still doesn't suppress these useless warnings ):
+
 train&lt;-as.data.frame(lapply(train, FUN=function(x) {return(as.numeric(as.character(x)))}))</code></pre>
 <pre><code>## Warning: NAs introduced by coercion
 ## Warning: NAs introduced by coercion
-[repeated]
-</code></pre>
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion
+## Warning: NAs introduced by coercion</code></pre>
 <p>Many variables in the dataset are broad summaries and were not computed at most timepoints. They cannot be used in the predictive model because R will throw out any record with any missing values. Normally we would want to consider imputing, but examination shows that all variables with <em>any</em> missing values are in fact missing in the vast majority of cases, so removing them is justifiable.</p>
 <pre class="r"><code>incomplete.vars&lt;-which(sapply(names(train), function(x) {sum(as.numeric(is.na(train[,x])))})&gt;0)
 
@@ -116,7 +150,11 @@ pcarf&lt;-randomForest(classe~., data=trainpca, ntree=200, do.trace=20)</code></
 ## C    7   37 3347   28    3    0.021917
 ## D    5    3   91 3109    8    0.033271
 ## E    1    8   21   11 3566    0.011367</code></pre>
-<p>As we can see, the model performs quite well! The random forest function cross-validates each tree by using it to predict outcomes for the records not included in that tree’s bootstrapped sample. The aggregate out-of-bag error rate of 1.82% is an estimate of how this model will perform in other samples of the same phenomenon.</p>
+<p>As we can see, the model performs quite well!</p>
+</div>
+<div id="estimating-out-of-sample-error" class="section level1">
+<h1>Estimating out-of-sample error</h1>
+<p>The random forest function cross-validates each tree by using it to predict outcomes for the records not included in that tree’s bootstrapped sample. <strong>The aggregate out-of-bag error rate of 1.82% is an estimate of how this model will perform in other samples of the same phenomenon.</strong></p>
 </div>
 <div id="further-variable-selection" class="section level1">
 <h1>Further variable selection</h1>
