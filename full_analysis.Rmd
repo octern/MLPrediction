@@ -48,7 +48,7 @@ pcarf<-randomForest(classe~., data=trainpca, ntree=200, do.trace=20)
 pcarf
 ```
 
-As we can see, the model performs quite well! The random forest function cross-validates each tree by using it to predict outcomes for the records not included in that tree's bootstrapped sample. The aggregate out-of-bag error rate of 1.82% is an estimate of how this model will perform in other samples of the same phenomenon. 
+As we can see, the model performs quite well! The random forest function cross-validates each tree by using it to predict outcomes for the records not included in that tree's bootstrapped sample. **The aggregate out-of-bag error rate of 1.82% is an estimate of how this model will perform in other samples of the same phenomenon.**
 
 #Further variable selection
 On the forums some folks suggested that it was... gauche... to toss everything indiscriminately into the model. 
