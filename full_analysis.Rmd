@@ -1,0 +1,101 @@
+---
+title: "Dumbbell Form Prediction"
+output: html_document
+---
+
+The purpose of this project is to predict, from accelerometer data, whether the user is doing a dumbbell curl correctly, or in one of four incorrect ways. Each row in the dataset represents an instantaneous set of accelerometer readings, and is used to predict whether the user is using proper form at that moment. Presumably this technology could be used to help exercisers improve their form with in-the-moment feedback or, perhaps, ridicule. 
+
+```{r init, cache=FALSE, results='hide'}
+library(caret)
+library(randomForest)
+setwd("/Users/hibounce/psych/datasci/ml/proj")
+train<-read.csv("pml-training.csv")
+```
+
+#Cleaning the data
+First, we remove the record ID, username, and other non-measurement variables, and do other housekeeping tasks. The outcome variable is temporarily removed for convenience.
+
+```{r clean, cache=FALSE, results='hide'}
+
+train<-train[-c(1:7)]
+classe<-train$classe
+train<-subset(train, select=-c(classe))
+
+train<-as.data.frame(lapply(train, FUN=function(x) {return(as.numeric(as.character(x)))}))
+
+```
+
+Many variables in the dataset are broad summaries and were not computed at most timepoints. They cannot be used in the predictive model because R will throw out any record with any missing values. Normally we would want to consider imputing, but examination shows that all variables with *any* missing values are in fact missing in the vast majority of cases, so removing them is justifiable. 
+
+```{r incomplet, cache=FALSE}
+incomplete.vars<-which(sapply(names(train), function(x) {sum(as.numeric(is.na(train[,x])))})>0)
+
+train<-train[-c(incomplete.vars)]
+```
+
+# Factor Analysis
+
+This leaves us with a dataset of 52 variables. We can perform a factor analysis to further reduce the dimensionality. After that we can use a random forest process to create our predictive model. Earlier experimentation indicated that there is little value to running more than 200 iterations. 
+
+```{r pcarf, cache=F}
+#set seed to an auspicious number
+set.seed(413)
+
+pca<-preProcess(train, method = "pca", thresh = .9, na.action="omit")
+trainpca<-predict(pca, train)
+trainpca$classe<-classe
+pcarf<-randomForest(classe~., data=trainpca, ntree=200, do.trace=20)
+pcarf
+```
+
+As we can see, the model performs quite well! The random forest function cross-validates each tree by using it to predict outcomes for the records not included in that tree's bootstrapped sample. The aggregate out-of-bag error rate of 1.82% is an estimate of how this model will perform in other samples of the same phenomenon. 
+
+#Further variable selection
+On the forums some folks suggested that it was... gauche... to toss everything indiscriminately into the model. 
+
+I see no value in removing variables just for the sake of removing them. However, there might be practical value if we could show that the predictive model works just as well with one entire sensor removed. That would reduce the cost and complexity of deploying the product!
+ 
+Below I break down the variables by site and re-run the PCA and random forest model with each one removed. 
+
+```{r removals}
+vars<-list(
+  "belt"=grep("_belt", names(train)),
+  "arm"=grep("_arm", names(train)),
+  "dumbbell"=grep("_dumbbell", names(train)),
+  "forearm"=grep("_forearm", names(train))
+)
+
+ncol(train[c(vars[["belt"]], vars[["arm"]], vars[["forearm"]], vars[["dumbbell"]])])  
+
+train_narm<-train[c(vars[["belt"]], vars[["forearm"]], vars[["dumbbell"]])]
+pca_narm<-preProcess(train_narm, method = "pca", thresh = .9, na.action="omit")
+trainpca_narm<-predict(pca_narm, train_narm)
+trainpca_narm$classe<-classe
+pcarf_narm<-randomForest(classe~., data=trainpca_narm, ntree=200)
+
+train_nbelt<-train[c(vars[["arm"]], vars[["forearm"]], vars[["dumbbell"]])]
+pca_nbelt<-preProcess(train_nbelt, method = "pca", thresh = .9, na.action="omit")
+trainpca_nbelt<-predict(pca_nbelt, train_nbelt)
+trainpca_nbelt$classe<-classe
+pcarf_nbelt<-randomForest(classe~., data=trainpca_nbelt, ntree=200)
+
+train_nbell<-train[c(vars[["arm"]], vars[["forearm"]], vars[["belt"]])]
+pca_nbell<-preProcess(train_nbell, method = "pca", thresh = .9, na.action="omit")
+trainpca_nbell<-predict(pca_nbell, train_nbell)
+trainpca_nbell$classe<-classe
+pcarf_nbell<-randomForest(classe~., data=trainpca_nbell, ntree=200)
+
+train_nfarm<-train[c(vars[["arm"]], vars[["belt"]], vars[["dumbbell"]])]
+pca_nfarm<-preProcess(train_nfarm, method = "pca", thresh = .9, na.action="omit")
+trainpca_nfarm<-predict(pca_nfarm, train_nfarm)
+trainpca_nfarm$classe<-classe
+pcarf_nfarm<-randomForest(classe~., data=trainpca_nfarm, ntree=200)
+
+pcarf_narm
+pcarf_nbelt
+pcarf_nbell
+pcarf_nfarm
+
+```
+
+The best-performing of these models is the one without the arm sensor, with an estimated out-of-sample error rate of 2.65%. Not bad! Experimentation indicates that the error rate rises rapidly if more than one sensor is removed.
