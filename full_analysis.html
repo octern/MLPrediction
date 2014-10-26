@@ -72,6 +72,8 @@ train&lt;-read.csv(&quot;pml-training.csv&quot;)</code></pre>
 classe&lt;-train$classe
 train&lt;-subset(train, select=-c(classe))
 
+# sorry, results='hide' still doesn't suppress these useless warnings ):
+
 train&lt;-as.data.frame(lapply(train, FUN=function(x) {return(as.numeric(as.character(x)))}))</code></pre>
 <pre><code>## Warning: NAs introduced by coercion
 ## Warning: NAs introduced by coercion
@@ -148,7 +150,11 @@ pcarf&lt;-randomForest(classe~., data=trainpca, ntree=200, do.trace=20)</code></
 ## C    7   37 3347   28    3    0.021917
 ## D    5    3   91 3109    8    0.033271
 ## E    1    8   21   11 3566    0.011367</code></pre>
-<p>As we can see, the model performs quite well! The random forest function cross-validates each tree by using it to predict outcomes for the records not included in that tree’s bootstrapped sample. The aggregate out-of-bag error rate of 1.82% is an estimate of how this model will perform in other samples of the same phenomenon.</p>
+<p>As we can see, the model performs quite well!</p>
+</div>
+<div id="estimating-out-of-sample-error" class="section level1">
+<h1>Estimating out-of-sample error</h1>
+<p>The random forest function cross-validates each tree by using it to predict outcomes for the records not included in that tree’s bootstrapped sample. <strong>The aggregate out-of-bag error rate of 1.82% is an estimate of how this model will perform in other samples of the same phenomenon.</strong></p>
 </div>
 <div id="further-variable-selection" class="section level1">
 <h1>Further variable selection</h1>

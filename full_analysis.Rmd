@@ -21,8 +21,9 @@ train<-train[-c(1:7)]
 classe<-train$classe
 train<-subset(train, select=-c(classe))
 
-train<-as.data.frame(lapply(train, FUN=function(x) {return(as.numeric(as.character(x)))}))
+# sorry, results='hide' still doesn't suppress these useless warnings ):
 
+train<-as.data.frame(lapply(train, FUN=function(x) {return(as.numeric(as.character(x)))}))
 ```
 
 Many variables in the dataset are broad summaries and were not computed at most timepoints. They cannot be used in the predictive model because R will throw out any record with any missing values. Normally we would want to consider imputing, but examination shows that all variables with *any* missing values are in fact missing in the vast majority of cases, so removing them is justifiable. 
@@ -48,7 +49,11 @@ pcarf<-randomForest(classe~., data=trainpca, ntree=200, do.trace=20)
 pcarf
 ```
 
-As we can see, the model performs quite well! The random forest function cross-validates each tree by using it to predict outcomes for the records not included in that tree's bootstrapped sample. **The aggregate out-of-bag error rate of 1.82% is an estimate of how this model will perform in other samples of the same phenomenon.**
+As we can see, the model performs quite well! 
+
+# Estimating out-of-sample error
+
+The random forest function cross-validates each tree by using it to predict outcomes for the records not included in that tree's bootstrapped sample. **The aggregate out-of-bag error rate of 1.82% is an estimate of how this model will perform in other samples of the same phenomenon.**
 
 #Further variable selection
 On the forums some folks suggested that it was... gauche... to toss everything indiscriminately into the model. 
